@@ -1,0 +1,40 @@
+name: property_management_app
+description: "Smart Property Management App"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Firebase Core
+  firebase_core: ^2.30.0
+
+  # Authentication
+  firebase_auth: ^4.19.0
+
+  # Firestore Database
+  cloud_firestore: ^4.17.0
+
+  # Firebase Storage (for property images)
+  firebase_storage: ^11.7.0
+
+  # Image Picker (for selecting images)
+
+  image_picker: ^1.0.4
+  
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
