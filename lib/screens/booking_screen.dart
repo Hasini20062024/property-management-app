@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
+import '../theme/app_theme.dart';
 
 class BookingScreen extends StatefulWidget {
   final String propertyId;
@@ -21,7 +23,6 @@ class BookingScreen extends StatefulWidget {
 }
 
 class _BookingScreenState extends State<BookingScreen> {
-
   DateTime? startDate;
   DateTime? endDate;
 
@@ -30,22 +31,8 @@ class _BookingScreenState extends State<BookingScreen> {
 
   bool isLoading = false;
 
-  /// 🎨 COMMON INPUT STYLE
-  InputDecoration inputDecoration(String label, IconData icon) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon),
-      filled: true,
-      fillColor: Colors.grey.shade100,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-    );
-  }
-
-  /// 📅 PICK DATE
   Future<void> pickDate(bool isStart) async {
-    DateTime? picked = await showDatePicker(
+    final picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime.now(),
@@ -63,16 +50,12 @@ class _BookingScreenState extends State<BookingScreen> {
     }
   }
 
-  /// 🚀 BOOKING FUNCTION
   Future<void> confirmBooking() async {
     final user = FirebaseAuth.instance.currentUser;
 
-    if (user == null ||
-        peopleController.text.isEmpty ||
-        phoneController.text.isEmpty) {
-
+    if (user == null || peopleController.text.isEmpty || phoneController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill required fields")),
+        const SnackBar(content: Text('Please fill required fields')),
       );
       return;
     }
@@ -80,63 +63,83 @@ class _BookingScreenState extends State<BookingScreen> {
     try {
       setState(() => isLoading = true);
 
-      await FirebaseFirestore.instance.collection("bookings").add({
-
-        "propertyId": widget.propertyId,
-        "title": widget.title,
-
-        "ownerId": widget.ownerId,
-        "userId": user.uid,
-
-        "tenantName": user.email ?? "User",
-        "tenantPhone": phoneController.text,
-        "people": peopleController.text,
-
-        "startDate": startDate != null
-            ? "${startDate!.day}/${startDate!.month}/${startDate!.year}"
-            : "",
-
-        "endDate": endDate != null
-            ? "${endDate!.day}/${endDate!.month}/${endDate!.year}"
-            : "",
-
-        "status": "pending",
-        "paymentStatus": "pending",
-        "timestamp": FieldValue.serverTimestamp(),
+      await FirebaseFirestore.instance.collection('bookings').add({
+        'propertyId': widget.propertyId,
+        'title': widget.title,
+        'ownerId': widget.ownerId,
+        'userId': user.uid,
+        'tenantName': user.email ?? 'User',
+        'tenantPhone': phoneController.text,
+        'people': peopleController.text,
+        'startDate': startDate != null ? '${startDate!.day}/${startDate!.month}/${startDate!.year}' : '',
+        'endDate': endDate != null ? '${endDate!.day}/${endDate!.month}/${endDate!.year}' : '',
+        'status': 'pending',
+        'paymentStatus': 'pending',
+        'timestamp': FieldValue.serverTimestamp(),
       });
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Booking Sent ✅")),
+        const SnackBar(content: Text('Booking sent')),
       );
-
       Navigator.pop(context);
-
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error: $e")));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
-  /// 📅 DATE BUTTON UI
   Widget dateButton(String text, DateTime? date, VoidCallback onTap) {
     return Expanded(
       child: InkWell(
         onTap: onTap,
-        child: Container(
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: Colors.blue.shade50,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.blue),
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFBFDBFE)),
           ),
           child: Center(
             child: Text(
-              date == null
-                  ? text
-                  : "${date.day}/${date.month}/${date.year}",
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              date == null ? text : '${date.day}/${date.month}/${date.year}',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    peopleController.dispose();
+    phoneController.dispose();
+    super.dispose();
+  }
+
+  Widget _glassOrb({
+    required double size,
+    required List<Color> colors,
+    required double top,
+    required double right,
+  }) {
+    return Positioned(
+      top: top,
+      right: right,
+      child: IgnorePointer(
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: colors,
             ),
           ),
         ),
@@ -146,108 +149,108 @@ class _BookingScreenState extends State<BookingScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-
-      appBar: AppBar(
-        title: const Text("Book Property"),
-        centerTitle: true,
-      ),
-
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-
-        child: Card(
-          elevation: 5,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+      appBar: AppBar(title: const Text('Book Property')),
+      body: Stack(
+        children: [
+          _glassOrb(
+            size: 220,
+            top: -90,
+            right: -60,
+            colors: [
+              Color(0x4D38BDF8),
+              Color(0x242563EB),
+            ],
           ),
-
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-
-                /// 🏠 TITLE
-                Text(
-                  widget.title,
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-
-                const SizedBox(height: 8),
-
-                /// 💰 RENT
-                Text(
-                  "₹${widget.rent}",
-                  style: const TextStyle(
-                      fontSize: 18, color: Colors.green),
-                ),
-
-                const Divider(height: 30),
-
-                /// 👥 PEOPLE
-                TextField(
-                  controller: peopleController,
-                  keyboardType: TextInputType.number,
-                  decoration: inputDecoration("Number of People", Icons.group),
-                ),
-
-                const SizedBox(height: 15),
-
-                /// 📞 PHONE
-                TextField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: inputDecoration("Phone Number", Icons.phone),
-                ),
-
-                const SizedBox(height: 20),
-
-                /// 📅 DATE PICKERS
-                const Text(
-                  "Select Dates (Optional)",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-
-                const SizedBox(height: 10),
-
-                Row(
-                  children: [
-                    dateButton("Start Date", startDate, () => pickDate(true)),
-                    const SizedBox(width: 10),
-                    dateButton("End Date", endDate, () => pickDate(false)),
-                  ],
-                ),
-
-                const SizedBox(height: 30),
-
-                /// 🚀 BUTTON
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: isLoading ? null : confirmBooking,
-                    child: isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                      "Confirm Booking",
-                      style: TextStyle(fontSize: 16),
+          _glassOrb(
+            size: 180,
+            top: 220,
+            right: -80,
+            colors: [
+              Color(0x3814B8A6),
+              Color(0x190EA5E9),
+            ],
+          ),
+          Container(
+            decoration: const BoxDecoration(
+              color: AppPalette.background,
+            ),
+            child: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            color: const Color(0xFFEFF6FF),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(widget.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                              const SizedBox(height: 4),
+                              Text('Rs ${widget.rent}', style: const TextStyle(fontSize: 17, color: AppPalette.success, fontWeight: FontWeight.w700)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        TextField(
+                          controller: peopleController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Number of People',
+                            prefixIcon: Icon(Icons.group_outlined),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        TextField(
+                          controller: phoneController,
+                          keyboardType: TextInputType.phone,
+                          decoration: const InputDecoration(
+                            labelText: 'Phone Number',
+                            prefixIcon: Icon(Icons.phone_outlined),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text('Select Dates (Optional)', style: TextStyle(fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            dateButton('Start Date', startDate, () => pickDate(true)),
+                            const SizedBox(width: 10),
+                            dateButton('End Date', endDate, () => pickDate(false)),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: isLoading ? null : confirmBooking,
+                            child: isLoading
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                                  )
+                                : const Text('Confirm Booking', style: TextStyle(fontSize: 16)),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
